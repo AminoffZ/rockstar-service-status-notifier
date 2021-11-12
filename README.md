@@ -8,3 +8,5 @@
 - Navigate to the previously extracted folder, and select it!
 
 ![](art.png)  
+ 
+ When the status of a service changes there will be a sound and popup notification in your browser.
