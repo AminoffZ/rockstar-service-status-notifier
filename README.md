@@ -1,4 +1,4 @@
-# Chrome extension to notify when Rockstar Games' services are back online  
+# Chrome Extension to Notify When Rockstar Games' Services Are Back Online  
 ## How to Install
 - Download zip and extract
 - Go to extension page on browser
