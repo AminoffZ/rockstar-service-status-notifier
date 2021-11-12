@@ -1,0 +1,15 @@
+{
+  "manifest_version": 2,
+  "name": "Notify when Rockstar's service status updates",
+  "version": "1.0",
+  "web_accessible_resources": ["script.js"],
+  "content_scripts": [
+    {
+      "matches": ["https://*.support.rockstargames.com/servicestatus"],
+      "js": ["content.js"]
+    }
+  ],
+  "browser_action": {
+    "default_icon": "icon.png"
+  }
+}
