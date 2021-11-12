@@ -9,4 +9,5 @@
 
 ![](art.png)  
  
- When the status of a service changes there will be a sound and popup notification in your browser.
+ When the status of a service changes there will be a sound and popup notification in your browser. Keep in mind that it only works when the Rockstar Games' [services status page](https://support.rockstargames.com/servicestatus) is open.  
+ 
