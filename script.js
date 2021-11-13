@@ -39,7 +39,7 @@ const observerCallback = function(mutationsList, observer) {
     }
     setTimeout(() => {
         alert(notificationMessage);
-    }, 100);
+    }, 1000);
 };
 
 function startObserver() {
