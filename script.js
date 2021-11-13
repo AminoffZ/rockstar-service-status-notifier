@@ -11,10 +11,8 @@ function waitForLoad() {
 
 function tryObserving() {
     if (!!document.querySelector("div.platform")) {
-        console.log("observer started");
         startObserver();
     } else {
-        console.log("wasnt ready");
         waitForLoad();
     }
 }
@@ -26,8 +24,11 @@ const observerCallback = function(mutationsList, observer) {
     /* Check when service status changes */
     let notificationMessage = "";
     for(const mutation of mutationsList) {
+        /* Assign on, down or limited depending on new status */
         const status = mutation["target"].className.split(" ")[1];
+        /* Assign PC, Xbox PS4 etc. */
         const platform = mutation["target"].parentElement.innerText;
+        /* Assign services: Red Dead Online, Grand Theft Auto Online etc. */
         const service = mutation["target"].parentElement.parentElement.previousSibling.innerText;
         if (status === "up") {
             cheer.play();
@@ -43,7 +44,7 @@ const observerCallback = function(mutationsList, observer) {
 };
 
 function startObserver() {
-    console.log ("DOMContentLoaded");
+    /* Parent of mutations */
     const observerElement = document.querySelector("div.flex.services")
     /* Create an observer instance linked to the callback function */
     const statusObserver = new MutationObserver(observerCallback);
