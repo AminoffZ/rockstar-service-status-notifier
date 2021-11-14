@@ -1,55 +1,137 @@
-const cheerUrl = "https://static.wikia.nocookie.net/ageofempires/images/5/5f/Aoe1_taunt009.mp3";
-const groanUrl = "https://static.wikia.nocookie.net/ageofempires/images/8/86/Aoe1_taunt011.mp3";
-var cheer = new Audio(cheerUrl);
-var groan = new Audio(groanUrl);
+const minutes = 5;
+const hours = 0;
+const interval = hours * 60 * 60 * 1000 + minutes * 60 * 1000;
+
+const audioUrl = "https://static.wikia.nocookie.net/ageofempires/images/7/7b/Blame_your_isp.ogg"
+const audio = new Audio(audioUrl);
 
 function waitForLoad() {
     setTimeout(() => {
-        tryObserving();
+        tryReading(0);
     }, 100);
 }
 
-function tryObserving() {
-    if (!!document.querySelector("div.platform")) {
-        startObserver();
+function tryReading(check) {
+    if (document.querySelector("div.platform")) {
+        if (check >= 20) {
+            setTimeout(() => {
+                start(interval)
+            }, 100);
+        } else {
+            tryReading(check+1);
+        }
     } else {
         waitForLoad();
     }
 }
 
-/* Options for the observer (which mutations to observe) */
-const observerConfig = { attributes: true, childList: true, subtree: true };
-/* Callback function to execute when mutations are observed */
-const observerCallback = function(mutationsList, observer) {
-    /* Check when service status changes */
-    let notificationMessage = "";
-    for(const mutation of mutationsList) {
-        /* Assign on, down or limited depending on new status */
-        const status = mutation["target"].className.split(" ")[1];
-        /* Assign PC, Xbox PS4 etc. */
-        const platform = mutation["target"].parentElement.innerText;
-        /* Assign services: Red Dead Online, Grand Theft Auto Online etc. */
-        const service = mutation["target"].parentElement.parentElement.previousSibling.innerText;
-        if (status === "up") {
-            cheer.play();
-        } else {
-            groan.play();
+function getServiceStatus() {
+    /* All services */
+    const services = document.querySelectorAll("div.flex-xxs-12.flex-xs-6.flex-sm-3.service");
+    /* Nodes displaying up, down, limited statuses */
+    const statusNodes = document.querySelectorAll("span.service-indicator");
+    nodeCount = 0;
+    let currentServiceStatus = {}
+    for (service of services) {
+        /* We get the text values for services and platforms */
+        const serviceText = service.innerText.split("\n");
+        const platforms = serviceText.slice(1);
+        /* We add the platforms as keys and statuses as values */
+        const platformStatuses = {}
+        for (platform of platforms) {
+            platformStatuses[platform] = statusNodes[nodeCount].className.split(" ")[1];
+            nodeCount++;
         }
-        const serviceUpdate = service + " on " + platform + ": " + status.charAt(0).toUpperCase() + status.slice(1);
-        notificationMessage += serviceUpdate;
+        /* We add platforms with statuses under services */
+        currentServiceStatus[serviceText[0]] = platformStatuses;
     }
-    setTimeout(() => {
-        alert(notificationMessage);
-    }, 1000);
-};
+    return currentServiceStatus;
+}
 
-function startObserver() {
-    /* Parent of mutations */
-    const observerElement = document.querySelector("div.flex.services")
-    /* Create an observer instance linked to the callback function */
-    const statusObserver = new MutationObserver(observerCallback);
-    /* Start observing the target node for configured mutations */
-    statusObserver.observe(observerElement, observerConfig);
+function getDifferences(old, current) {
+    var differences = "";
+    for (service of Object.keys(old)) {
+        /* We skip if all platform statuses are the same for a service */
+        if (JSON.stringify(old[service]) === JSON.stringify(current[service])) {
+            continue;
+        } else {
+            differences += service + ":\n";
+            /* We check which platform statuses differ */
+            for (platform of Object.keys(old[service])) {
+                if (old[service][platform] === current[service][platform]) {
+                    continue;
+                } else {
+                    /* We add differences */
+                    differences += platform + " went " + current[service][platform] + "!" + "\n";
+                }
+            }
+            differences += "\n";
+        }
+    }
+    return differences;
+}
+
+function playAudio() {
+    var promise = audio.play();
+    if (promise !== undefined) {
+        promise.then(_ => {
+        }).catch(error => {
+            addButton();
+        });
+    }
+}
+
+function statusUpdate(jold, jcurrent) {
+    if (jold === jcurrent) {
+        playAudio();
+        return "Nothing's changed.";
+    } else {
+        playAudio();
+        const old = JSON.parse(jold);
+        const current = JSON.parse(jcurrent);
+        setTimeout(function() {
+            return getDifferences(old, current);
+        }, 2000);
+    }
+}
+
+function addButton() {
+    let btn = document.createElement("button");
+    btn.innerHTML = "Click to enable sound!";
+    document.querySelector("h3").appendChild(btn);
+    btn.addEventListener("click", function() {
+        btn.innerHTML = ":)";
+        playAudio();
+    });
+}
+
+function addHtml() {
+    let rssn = document.createElement("h3");
+    rssn.innerHTML = "<br />" + "Rockstar Service Status Notifier" + "<br />";
+    document.querySelector("div.alert").appendChild(rssn);
+}
+
+function addNotification(notification) {
+    var notificationSpan = document.createElement('span');
+    notificationSpan.innerHTML = "<br />" + "<br />" + notification;
+    document.querySelector("div.alert").appendChild(notificationSpan);
+}
+
+function start(interval) {
+    addHtml();
+    const jold = localStorage.getItem("old")
+    const jcurrent = JSON.stringify(getServiceStatus());
+    if (jold) {
+        const notification = statusUpdate(jold, jcurrent);
+        addNotification(notification);
+    } else {
+        const notification = "Rockstar Service Notifier is Live!" + "\n" + "Refresh Interval: " + hours + ":" + minutes + ":" + "00";
+        addNotification(notification);
+    }
+    setTimeout(function() {
+        localStorage.setItem("old", JSON.stringify(getServiceStatus()));
+        location.reload();
+    }, interval);
 }
 
 waitForLoad();
