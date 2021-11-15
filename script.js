@@ -13,7 +13,7 @@ function waitForLoad() {
 
 function tryReading(check) {
     if (document.querySelector("div.platform")) {
-        if (check >= 20) {
+        if (check >= 29) {
             setTimeout(() => {
                 start(interval)
             }, 100);
@@ -76,14 +76,13 @@ function playAudio() {
     if (promise !== undefined) {
         promise.then(_ => {
         }).catch(error => {
-            addButton();
+            addElement("button", "Click to enable sound!");
         });
     }
 }
 
 function statusUpdate(jold, jcurrent) {
     if (jold === jcurrent) {
-        playAudio();
         return "Nothing's changed.";
     } else {
         playAudio();
@@ -95,9 +94,7 @@ function statusUpdate(jold, jcurrent) {
     }
 }
 
-function addButton() {
-    let btn = document.createElement("button");
-    btn.innerHTML = "Click to enable sound!";
+function addButton(btn) {
     document.querySelector("h3").appendChild(btn);
     btn.addEventListener("click", function() {
         btn.innerHTML = ":)";
@@ -105,20 +102,27 @@ function addButton() {
     });
 }
 
-function addHtml() {
-    let rssn = document.createElement("h3");
-    rssn.innerHTML = "<br />" + "Rockstar Service Status Notifier" + "<br />";
-    document.querySelector("div.alert").appendChild(rssn);
+function addElement(type, text) {
+    let element = document.createElement(type)
+    element.innerHTML = text;
+    if (type === "button") {
+        addButton(element);
+        return;
+    }
+    document.querySelector("div.updated").appendChild(element);
 }
 
 function addNotification(notification) {
-    var notificationSpan = document.createElement('span');
-    notificationSpan.innerHTML = "<br />" + "<br />" + notification;
-    document.querySelector("div.alert").appendChild(notificationSpan);
+    addElement('span', notification);
+}
+
+function addHeader(text) {
+    addElement("h3", text);
 }
 
 function start(interval) {
-    addHtml();
+    const header = "<br />" + "Rockstar Service Status Notifier" + "<br />"
+    addHeader(header);
     const jold = localStorage.getItem("old")
     const jcurrent = JSON.stringify(getServiceStatus());
     if (jold) {
