@@ -5,135 +5,139 @@ const interval = hours * 60 * 60 * 1000 + minutes * 60 * 1000;
 const audioUrl = "https://static.wikia.nocookie.net/ageofempires/images/7/7b/Blame_your_isp.ogg"
 const audio = new Audio(audioUrl);
 
+/* Wait until we can interact with desired elements */
 function waitForLoad() {
     setTimeout(() => {
-        tryReading(0);
-    }, 100);
+        tryReading();
+    }, 250);
 }
 
-function tryReading(check) {
-    if (document.querySelector("div.platform")) {
-        if (check >= 29) {
-            setTimeout(() => {
-                start(interval)
-            }, 100);
+function tryReading() {
+    const platforms = document.querySelectorAll(".platform");
+    if (platforms) {
+        if (platforms.length >= 16 && platforms[0].ariaLabel) {
+            startExtension();
         } else {
-            tryReading(check+1);
+            waitForLoad();
         }
     } else {
         waitForLoad();
     }
 }
 
+/* Get the status of all services */
 function getServiceStatus() {
-    /* All services */
-    const services = document.querySelectorAll("div.flex-xxs-12.flex-xs-6.flex-sm-3.service");
-    /* Nodes displaying up, down, limited statuses */
-    const statusNodes = document.querySelectorAll("span.service-indicator");
-    nodeCount = 0;
-    let currentServiceStatus = {}
-    for (service of services) {
-        /* We get the text values for services and platforms */
-        const serviceText = service.innerText.split("\n");
-        const platforms = serviceText.slice(1);
-        /* We add the platforms as keys and statuses as values */
-        const platformStatuses = {}
-        for (platform of platforms) {
-            platformStatuses[platform] = statusNodes[nodeCount].className.split(" ")[1];
-            nodeCount++;
-        }
-        /* We add platforms with statuses under services */
-        currentServiceStatus[serviceText[0]] = platformStatuses;
+    platforms = document.querySelectorAll(".platform");
+    let currentServiceStatus = [];
+    for (item of platforms) {
+        currentServiceStatus.push(item.ariaLabel);
     }
     return currentServiceStatus;
 }
 
-function getDifferences(old, current) {
-    var differences = "";
-    for (service of Object.keys(old)) {
-        /* We skip if all platform statuses are the same for a service */
-        if (JSON.stringify(old[service]) === JSON.stringify(current[service])) {
-            continue;
-        } else {
-            differences += service + ":\n";
-            /* We check which platform statuses differ */
-            for (platform of Object.keys(old[service])) {
-                if (old[service][platform] === current[service][platform]) {
-                    continue;
-                } else {
-                    /* We add differences */
-                    differences += platform + " went " + current[service][platform] + "!" + "\n";
-                }
-            }
-            differences += "\n";
-        }
+/* Check for differences */
+function statusUpdate(old, current) {
+    const jold = JSON.stringify(old);
+    const jcurrent = JSON.stringify(current);
+    if (jold === jcurrent) {
+        return "";
+    } else {
+        const differences = getDifferences(old, current);
+        playExtensionAudio();
+        return differences;
     }
-    return differences;
 }
 
-function playAudio() {
+/* Get the differences */
+function getDifferences(old, current) {
+    let differences = []
+    old.forEach((item, index) => {
+        if (item === current[index]) {
+            return;
+        } else {
+            differences.push(current[index]);
+        }
+      });
+      return differences;
+}
+
+function playExtensionAudio() {
+    /* We need this because google requires user interaction to play sound */
     var promise = audio.play();
     if (promise !== undefined) {
         promise.then(_ => {
         }).catch(error => {
-            addElement("button", "Click to enable sound!");
+            addExtensionElement("button", "Click to enable sound!", "extension-button");
         });
     }
 }
 
-function statusUpdate(jold, jcurrent) {
-    if (jold === jcurrent) {
-        return "Nothing's changed.";
+function addExtensionElement(type, text, id) {
+    let element = document.createElement(type)
+    element.innerHTML = text;
+    element.setAttribute("id", id);
+    if (type === "button") {
+        addExtensionButton(element);
+        return;
+    }
+    if (type === "div") {
+        referenceElement = document.querySelector("div.updated");
+        referenceElement.appendChild(element);
     } else {
-        playAudio();
-        const old = JSON.parse(jold);
-        const current = JSON.parse(jcurrent);
-        setTimeout(function() {
-            return getDifferences(old, current);
-        }, 2000);
+        document.getElementById("extension-header").appendChild(element);
     }
 }
 
-function addButton(btn) {
-    document.querySelector("h3").appendChild(btn);
+function addExtensionHeader() {
+    const text = "<br />" + "<h3><b>Rockstar Service Status Notifier</b></h3>" + "<br />";
+    addExtensionElement("div", text, "extension-header");
+}
+
+function addExtensionNotification() {
+    const notification = setExtensionNotification();
+    addExtensionElement('span', notification, "extension-notification");
+}
+
+function addExtensionButton(btn) {
+    document.getElementById("extension-header").appendChild(btn);
     btn.addEventListener("click", function() {
-        btn.innerHTML = ":)";
-        playAudio();
+        btn.innerHTML = "Audio On!";
+        playExtensionAudio();
     });
 }
 
-function addElement(type, text) {
-    let element = document.createElement(type)
-    element.innerHTML = text;
-    if (type === "button") {
-        addButton(element);
-        return;
-    }
-    document.querySelector("div.updated").appendChild(element);
-}
-
-function addNotification(notification) {
-    addElement('span', notification);
-}
-
-function addHeader(text) {
-    addElement("h3", text);
-}
-
-function start(interval) {
-    const header = "<br />" + "Rockstar Service Status Notifier" + "<br />"
-    addHeader(header);
-    const jold = localStorage.getItem("old")
-    const jcurrent = JSON.stringify(getServiceStatus());
-    if (jold) {
-        const notification = statusUpdate(jold, jcurrent);
-        addNotification(notification);
+function setExtensionNotification() {
+    const old = localStorage.getItem("old").split(",").sort();
+    const current = getServiceStatus().sort();
+    let notification = "";
+    if (old) {
+        const differences = statusUpdate(old, current);
+        if (!differences) {
+            notification = "Nothing's Changed.";
+        } else {
+            for (difference of differences) {
+                /* Add service category only once */
+                let differenceSplit = difference.split(" - ");
+                if (!notification.includes(difference.split(" - ")[0])) {
+                    notification += "<b>" + differenceSplit[0] + "</b><br />";
+                }
+                /* Add platform and status */
+                notification += differenceSplit[1] + " went " + differenceSplit[2] + "<br />";
+            }
+        }
     } else {
-        const notification = "Rockstar Service Notifier is Live!" + "\n" + "Refresh Interval: " + hours + ":" + minutes + ":" + "00";
-        addNotification(notification);
+        /* If no localStorage, display welcome message */
+        notification = "Rockstar Service Notifier is Live!" + "\n" + "Refresh Interval: " + hours + ":" + minutes + ":" + "00";
     }
+    return notification + "<br />";
+}
+
+function startExtension() {
+    addExtensionHeader();
+    addExtensionNotification();
+    /* Save current status and refresh after set time */
     setTimeout(function() {
-        localStorage.setItem("old", JSON.stringify(getServiceStatus()));
+        localStorage.setItem("old", getServiceStatus());
         location.reload();
     }, interval);
 }
