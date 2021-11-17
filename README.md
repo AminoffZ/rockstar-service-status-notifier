@@ -14,7 +14,7 @@
 - Select load unpacked (top left)
 - Navigate to the previously extracted folder, and select it!
 - Go to Rockstar Games' [services status page](https://support.rockstargames.com/servicestatus)  
-- If you want audi and push notifications to work you may need to allow those permissions in the site settings  
+- If you want audio and push notifications to work you may need to allow those permissions in the site settings  
 
 ---
 
