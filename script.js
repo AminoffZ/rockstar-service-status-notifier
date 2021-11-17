@@ -5,6 +5,8 @@ const interval = hours * 60 * 60 * 1000 + minutes * 60 * 1000;
 const audioUrl = "https://static.wikia.nocookie.net/ageofempires/images/7/7b/Blame_your_isp.ogg"
 const audio = new Audio(audioUrl);
 
+let statusChanged = false;
+
 /* Wait until we can interact with desired elements */
 function waitForLoad() {
     setTimeout(() => {
@@ -36,26 +38,26 @@ function getServiceStatus() {
 }
 
 /* Check for differences */
-function statusUpdate(old, current) {
-    const jold = JSON.stringify(old);
-    const jcurrent = JSON.stringify(current);
-    if (jold === jcurrent) {
+function statusUpdate(oldStatus, currentStatus) {
+    const joldStatus = JSON.stringify(oldStatus);
+    const jcurrentStatus = JSON.stringify(currentStatus);
+    if (joldStatus === jcurrentStatus) {
         return "";
     } else {
-        const differences = getDifferences(old, current);
-        playExtensionAudio();
+        const differences = getDifferences(oldStatus, currentStatus);
+        statusChanged = true;
         return differences;
     }
 }
 
 /* Get the differences */
-function getDifferences(old, current) {
+function getDifferences(oldStatus, currentStatus) {
     let differences = []
-    old.forEach((item, index) => {
-        if (item === current[index]) {
+    oldStatus.forEach((item, index) => {
+        if (item === currentStatus[index]) {
             return;
         } else {
-            differences.push(current[index]);
+            differences.push(currentStatus[index]);
         }
       });
       return differences;
@@ -67,7 +69,8 @@ function playExtensionAudio() {
     if (promise !== undefined) {
         promise.then(_ => {
         }).catch(error => {
-            addExtensionElement("button", "Click to enable sound!", "extension-button");
+            addAudioErrorMessage();
+            document.getElementById("extension-button").innerHTML = "Audio is OFF";
         });
     }
 }
@@ -76,10 +79,6 @@ function addExtensionElement(type, text, id) {
     let element = document.createElement(type)
     element.innerHTML = text;
     element.setAttribute("id", id);
-    if (type === "button") {
-        addExtensionButton(element);
-        return;
-    }
     if (type === "div") {
         referenceElement = document.querySelector("div.updated");
         referenceElement.appendChild(element);
@@ -89,8 +88,8 @@ function addExtensionElement(type, text, id) {
 }
 
 function addExtensionHeader() {
-    const text = "<br />" + "<h3><b>Rockstar Service Status Notifier</b></h3>" + "<br />";
-    addExtensionElement("div", text, "extension-header");
+    const header = "<br />" + "<h3><b>Rockstar Service Status Notifier</b></h3>" + "<br />";
+    addExtensionElement("div", header, "extension-header");
 }
 
 function addExtensionNotification() {
@@ -98,23 +97,47 @@ function addExtensionNotification() {
     addExtensionElement('span', notification, "extension-notification");
 }
 
-function addExtensionButton(btn) {
+function addAudioErrorMessage() {
+    const message = "<br />" + "Permission required to play sound, you can change this in the site settings. (Click the lock on the left side of the url.)";
+    addExtensionElement('span', message, "audio-error-message");
+}
+
+function addExtensionButton() {
+    let btn = document.createElement("button");
+    btn.setAttribute("id", "extension-button");
+    const onState = "Audio is ON";
+    const offState = "Audio is OFF";
+    let buttonState = offState;
+    if (localStorage.getItem("extensionButton")) {
+        buttonState = localStorage.getItem("extensionButton");
+    }
+    btn.innerHTML = buttonState;
     document.getElementById("extension-header").appendChild(btn);
     btn.addEventListener("click", function() {
-        btn.innerHTML = "Audio On!";
-        playExtensionAudio();
+        if (btn.innerHTML === offState) {
+            localStorage.setItem("extensionButton", onState);
+            btn.innerHTML = onState;
+            audio.muted = false;
+            playExtensionAudio();
+        } else {
+            btn.innerHTML = offState;
+            localStorage.setItem("extensionButton", offState);
+            audio.muted = true;
+        }
     });
 }
 
 function setExtensionNotification() {
-    const old = localStorage.getItem("old").split(",").sort();
-    const current = getServiceStatus().sort();
     let notification = "";
-    if (old) {
-        const differences = statusUpdate(old, current);
+    const joldStatus = localStorage.getItem("oldStatus");
+    if (joldStatus) {
+        const oldStatus = localStorage.getItem("oldStatus").split(",").sort();
+        const currentStatus = getServiceStatus().sort();
+        const differences = statusUpdate(oldStatus, currentStatus);
         if (!differences) {
             notification = "Nothing's Changed.";
         } else {
+            let statusChanges = {"UP":0,"LIMITED":0,"DOWN":0};
             for (difference of differences) {
                 /* Add service category only once */
                 let differenceSplit = difference.split(" - ");
@@ -123,7 +146,19 @@ function setExtensionNotification() {
                 }
                 /* Add platform and status */
                 notification += differenceSplit[1] + " went " + differenceSplit[2] + "<br />";
+                switch(differenceSplit[2]) {
+                    case ("UP"):
+                        statusChanges["UP"]++;
+                        break;
+                    case ("LIMITED"):
+                        statusChanges["LIMITED"]++;
+                        break;
+                    case ("DOWN"):
+                        statusChanges["DOWN"]++;
+                        break;
+                }
             }
+            showNotification(statusChanges);
         }
     } else {
         /* If no localStorage, display welcome message */
@@ -132,12 +167,49 @@ function setExtensionNotification() {
     return notification + "<br />";
 }
 
+function showNotification(statusChanges) {
+    let notification = "";
+    for (change of Object.keys(statusChanges)) {
+        if (!statusChanges[change]) {
+            continue;
+        } else {
+            notification += statusChanges[change] + " services went " + change + "!\n";
+        }
+    }
+    // Let's check if the browser supports notifications
+    if (!("Notification" in window)) {
+        console.log("This browser does not support desktop notification");
+    }
+    // Let's check whether notification permissions have already been granted
+    else if (Notification.permission === "granted") {
+        // If it's okay let's create a notification
+        var pushNotification = new Notification(
+            "Rockstar Service Status Notifier",
+            {icon: "icon.png", body: notification});
+    }
+    // Otherwise, we need to ask the user for permission
+    else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then(function (permission) {
+        // If the user accepts, let's create a notification
+        if (permission === "granted") {
+            var pushNotification = new Notification(
+                "Rockstar Service Status Notifier",
+                {icon: "icon.png", body: notification});
+        }
+        });
+    }
+}
+
 function startExtension() {
     addExtensionHeader();
     addExtensionNotification();
+    addExtensionButton();
+    if (statusChanged) {
+        playExtensionAudio();
+    }
     /* Save current status and refresh after set time */
     setTimeout(function() {
-        localStorage.setItem("old", getServiceStatus());
+        localStorage.setItem("oldStatus", getServiceStatus());
         location.reload();
     }, interval);
 }
