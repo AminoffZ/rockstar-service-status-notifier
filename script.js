@@ -86,7 +86,7 @@ function statusUpdate(oldStatus, currentStatus) {
 
 /* Get the differences */
 function getDifferences(oldStatus, currentStatus) {
-    let differences = []
+    let differences = [];
     oldStatus.forEach((item, index) => {
         if (item === currentStatus[index]) {
             return;
@@ -156,6 +156,8 @@ function addExtensionButton() {
         } else {
             btn.innerHTML = offState;
             localStorage.setItem("extensionButton", offState);
+            audio.pause();
+            audio.currentTime = 0;
             audio.muted = true;
         }
     });
