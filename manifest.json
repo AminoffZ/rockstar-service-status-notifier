@@ -21,6 +21,7 @@
   },
   "permissions": [
     "notifications",
-    "storage"
+    "storage",
+    "tabs"
   ]
 }
