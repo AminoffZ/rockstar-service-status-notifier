@@ -121,8 +121,14 @@ function addExtensionElement(type, text, id) {
     }
 }
 
+function addIntervalInfo() {
+    const prettifyTime = (num, places) => String(num).padStart(places, '0');
+    const paragraph = "Refresh Interval: " + prettifyTime(HOURS, 2) + ":" + prettifyTime(MINUTES, 2) + ":" + "00<br />";
+    addExtensionElement("span", paragraph, "interval-info");
+}
+
 function addExtensionHeader() {
-    const header = "<br />" + "<h3><b>Rockstar Service Status Notifier</b></h3>" + "<br />";
+    const header = "<br /><h3><b>Rockstar Service Status Notifier</b></h3>\n";
     addExtensionElement("div", header, "extension-header");
 }
 
@@ -197,8 +203,8 @@ function setExtensionNotification() {
             showNotification(statusChanges);
         }
     } else {
-        /* If no localStorage, display welcome message */
-        notification = "Rockstar Service Notifier is Live!" + "\n" + "Refresh Interval: " + HOURS + ":" + MINUTES + ":" + "00";
+        /* If no localStorage, add localStorage */
+        localStorage.setItem("oldStatus", getServiceStatus());
     }
     return notification + "<br />";
 }
@@ -238,6 +244,7 @@ function showNotification(statusChanges) {
 
 function startExtension() {
     addExtensionHeader();
+    addIntervalInfo();
     addExtensionNotification();
     addExtensionButton();
     if (statusChanged) {

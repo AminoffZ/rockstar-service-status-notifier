@@ -17,6 +17,13 @@ function addSavedInterval(unit) {
 addSavedInterval("minutes");
 addSavedInterval("hours");
 
+function updateIntervalInfo(minutes, hours){
+    var intervalInfo = document.getElementById("interval-info");
+    const prettifyTime = (num, places) => String(num).padStart(places, '0');
+    const paragraph = "Refresh Interval: " + prettifyTime(hours, 2) + ":" + prettifyTime(minutes, 2) + ":" + "00";
+    intervalInfo.innerHTML = paragraph;
+}
+
 /* We inject script.js */
 var injectScript = document.createElement('script');
 injectScript.src = chrome.runtime.getURL('script.js');
@@ -24,3 +31,13 @@ injectScript.onload = function() {
     this.remove();
 };
 (document.head || document.documentElement).appendChild(injectScript);
+
+chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse) {
+        if(request.message[0] === "update-interval-info") {
+            minutes = request.message[1];
+            hours = request.message[2];
+            updateIntervalInfo(minutes, hours);
+        }
+    }
+);

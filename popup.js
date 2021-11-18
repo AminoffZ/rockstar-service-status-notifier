@@ -61,9 +61,19 @@ function getSaved() {
     });
 }
 
+function updateIntervalInfo() {
+    minutes = getMinutes();
+    hours = getHours();
+    chrome.tabs.query({currentWindow: true, active: true}, function (tabs){
+    var activeTab = tabs[0];
+    chrome.tabs.sendMessage(activeTab.id, {"message": ["update-interval-info", minutes, hours]});
+   });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("save-interval").addEventListener("click", function() {
         setInterval();
+        updateIntervalInfo();
     });
 });
 
