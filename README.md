@@ -1,10 +1,10 @@
 # Chrome Extension to Notify When Rockstar Games' Services Are Back Online  
 ## How to Install
-<img align="right" width="220" height="220" src="showcase.png">
+<img align="right" width="220" height="220" src="showcase_0.png">
 
 --- 
 
-<img align="right" width="128" height="128" src="icon.png">
+<img align="right" width="220" height="180" src="showcase_1.png">
 
 
 - Download zip and extract
