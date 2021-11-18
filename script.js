@@ -1,11 +1,45 @@
-const minutes = 5;
-const hours = 0;
-const interval = hours * 60 * 60 * 1000 + minutes * 60 * 1000;
+let MINUTES = 5;
+let HOURS = 0;
+let INTERVAL = HOURS * 60 * 60 * 1000 + MINUTES * 60 * 1000;
 
 const audioUrl = "https://static.wikia.nocookie.net/ageofempires/images/7/7b/Blame_your_isp.ogg"
 const audio = new Audio(audioUrl);
 
 let statusChanged = false;
+
+function setMinutes() {
+    var element = document.getElementById("input-minutes");
+    if (element) {
+        if(element.getAttribute("value")) {
+            MINUTES = element.getAttribute("value");
+        }
+    }
+}
+
+function setHours() {
+    var element = document.getElementById("input-hours");
+    if (element) {
+        if(element.getAttribute("value")) {
+            HOURS = element.getAttribute("value");
+        }
+    }
+}
+
+function setInterval() {
+    INTERVAL = HOURS * 60 * 60 * 1000 + MINUTES * 60 * 1000;
+}
+
+function getMinutes() {
+    return MINUTES;
+}
+
+function getHours() {
+    return HOURS;
+}
+
+function getInterval() {
+    return INTERVAL/1000;
+}
 
 /* Wait until we can interact with desired elements */
 function waitForLoad() {
@@ -76,7 +110,7 @@ function playExtensionAudio() {
 }
 
 function addExtensionElement(type, text, id) {
-    let element = document.createElement(type)
+    let element = document.createElement(type);
     element.innerHTML = text;
     element.setAttribute("id", id);
     if (type === "div") {
@@ -162,7 +196,7 @@ function setExtensionNotification() {
         }
     } else {
         /* If no localStorage, display welcome message */
-        notification = "Rockstar Service Notifier is Live!" + "\n" + "Refresh Interval: " + hours + ":" + minutes + ":" + "00";
+        notification = "Rockstar Service Notifier is Live!" + "\n" + "Refresh Interval: " + HOURS + ":" + MINUTES + ":" + "00";
     }
     return notification + "<br />";
 }
@@ -211,7 +245,10 @@ function startExtension() {
     setTimeout(function() {
         localStorage.setItem("oldStatus", getServiceStatus());
         location.reload();
-    }, interval);
+    }, INTERVAL);
 }
 
+setMinutes();
+setHours();
+setInterval();
 waitForLoad();
