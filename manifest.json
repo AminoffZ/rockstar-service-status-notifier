@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Notify when Rockstar's service status updates",
-  "version": "1.4.1",
+  "name": "Rockstar Service Status Notifier",
+  "version": "1.4.2",
   "web_accessible_resources": [
     {
       "resources": ["script.js"],
