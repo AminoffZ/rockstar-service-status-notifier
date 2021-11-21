@@ -20,7 +20,7 @@ addSavedInterval("hours");
 function updateIntervalInfo(minutes, hours){
     var intervalInfo = document.getElementById("interval-info");
     const prettifyTime = (num, places) => String(num).padStart(places, '0');
-    const paragraph = "Refresh Interval: " + prettifyTime(hours, 2) + ":" + prettifyTime(minutes, 2) + ":" + "00";
+    const paragraph = "Refresh Interval: " + prettifyTime(hours, 2) + ":" + prettifyTime(minutes, 2) + ":" + "00<br />";
     intervalInfo.innerHTML = paragraph;
 }
 
