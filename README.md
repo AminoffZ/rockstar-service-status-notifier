@@ -1,5 +1,6 @@
 # Chrome Extension to Notify When Rockstar Games' Services Are Back Online  
-## How to Install
+[![Google Chrome](https://img.shields.io/chrome-web-store/v/enpjgimgeefmlbncnhmnginocjneojlf?label=Get%20RSSN%20for%20Chrome&logo=Google%20Chrome)](https://chrome.google.com/webstore/detail/rockstar-service-status-n/enpjgimgeefmlbncnhmnginocjneojlf)  
+## How to Install Unpacked Version
 <img align="right" width="220" height="220" src="images\showcase_0.png">
 
 --- 
