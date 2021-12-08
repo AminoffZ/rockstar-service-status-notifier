@@ -24,6 +24,10 @@ function updateIntervalInfo(minutes, hours){
     intervalInfo.innerHTML = paragraph;
 }
 
+/* function goToSite() {
+    window.open("https://support.rockstargames.com/servicestatus");
+} */
+
 /* We inject script.js */
 var injectScript = document.createElement('script');
 injectScript.src = chrome.runtime.getURL('script.js');
@@ -35,9 +39,11 @@ injectScript.onload = function() {
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
         if(request.message[0] === "update-interval-info") {
-            minutes = request.message[1];
-            hours = request.message[2];
+            const minutes = request.message[1];
+            const hours = request.message[2];
             updateIntervalInfo(minutes, hours);
-        }
+        } /* else if (request.message[0] === "go-to-site") {
+            goToSite();
+        } */
     }
 );

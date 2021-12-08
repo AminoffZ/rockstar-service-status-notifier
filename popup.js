@@ -61,16 +61,28 @@ function getSaved() {
     });
 }
 
-function updateIntervalInfo() {
-    minutes = getMinutes();
-    hours = getHours();
+function mailMan(message) {
     chrome.tabs.query({currentWindow: true, active: true}, function (tabs){
-    var activeTab = tabs[0];
-    chrome.tabs.sendMessage(activeTab.id, {"message": ["update-interval-info", minutes, hours]});
-   });
+        var activeTab = tabs[0];
+        chrome.tabs.sendMessage(activeTab.id, {"message": message});
+    });
+}
+
+function goToSite() {
+    window.open("https://support.rockstargames.com/servicestatus");
+}
+
+function updateIntervalInfo() {
+    const minutes = getMinutes();
+    const hours = getHours();
+    const message = ["update-interval-info", minutes, hours];
+    mailMan(message);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById("go-to-site-button").addEventListener("click", function() {
+        goToSite();
+    });
     document.getElementById("save-interval").addEventListener("click", function() {
         setInterval();
         updateIntervalInfo();
